@@ -1,0 +1,3 @@
+--coco_path /home/jht/github/deep-high-resolution-net.pytorch/data/coco --model_path coco_resnet_50_map_0_335_state_dict.pt
+
+--dataset coco --coco_path /home/jht/github/deep-high-resolution-net.pytorch/data/coco --model coco_resnet_50_map_0_335_state_dict.pt
