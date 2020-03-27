@@ -63,6 +63,49 @@ class PyramidFeatures(nn.Module):
         P7_x = self.P7_2(P7_x)
 
         return [P3_x, P4_x, P5_x, P6_x, P7_x]
+    # def forward(self, inputs):
+    #     C3, C4, C5 = inputs
+    #     print("=================================")
+    #
+    #     print("C5.shape" + str(list(C5.size())))
+    #     P5_x = self.P5_1(C5)
+    #     print("P5_x.shape" + str(list(P5_x.size())))
+    #     P5_upsampled_x = self.P5_upsampled(P5_x)
+    #     print("P5_upsampled_x.shape" + str(list(P5_upsampled_x.size())))
+    #     P5_x = self.P5_2(P5_x)
+    #     print("P5_x.shape" + str(list(P5_x.size())))
+    #
+    #     print("=================================")
+    #     print("C4.shape" + str(list(C4.size())))
+    #     P4_x = self.P4_1(C4)
+    #     print("P4_x.shape" + str(list(P4_x.size())))
+    #     P4_x = P5_upsampled_x + P4_x
+    #     print("P4_x.shape" + str(list(P4_x.size())))
+    #     P4_upsampled_x = self.P4_upsampled(P4_x)
+    #     print("P4_upsampled_x.shape" + str(list(P4_upsampled_x.size())))
+    #     P4_x = self.P4_2(P4_x)
+    #     print("P4_x.shape" + str(list(P4_x.size())))
+    #     print("=================================")
+    #
+    #     print("C3.shape" + str(list(C3.size())))
+    #     P3_x = self.P3_1(C3)
+    #     print("P3_x.shape" + str(list(P3_x.size())))
+    #     P3_x = P3_x + P4_upsampled_x
+    #     print("P3_x.shape" + str(list(P3_x.size())))
+    #     P3_x = self.P3_2(P3_x)
+    #     print("P3_x.shape" + str(list(P3_x.size())))
+    #     print("=================================")
+    #
+    #     print("C5.shape" + str(list(C5.size())))
+    #     P6_x = self.P6(C5)
+    #     print("P6_x.shape" + str(list(P6_x.size())))
+    #     P7_x = self.P7_1(P6_x)
+    #     print("P7_x.shape" + str(list(P7_x.size())))
+    #     P7_x = self.P7_2(P7_x)
+    #     print("P7_x.shape" + str(list(P7_x.size())))
+    #     print("=================================")
+    #
+    #     return [P3_x, P4_x, P5_x, P6_x, P7_x]
 
 
 class RegressionModel(nn.Module):
@@ -148,8 +191,8 @@ class ClassificationModel(nn.Module):
         batch_size, width, height, channels = out1.shape
 
         out2 = out1.view(batch_size, width, height, self.num_anchors, self.num_classes)
-
-        return out2.contiguous().view(x.shape[0], -1, self.num_classes)
+        result = out2.contiguous().view(x.shape[0], -1, self.num_classes)
+        return result
 
 
 class ResNet(nn.Module):
@@ -176,10 +219,8 @@ class ResNet(nn.Module):
             raise ValueError(f"Block type {block} not understood")
 
         self.fpn = PyramidFeatures(fpn_sizes[0], fpn_sizes[1], fpn_sizes[2])
-
         self.regressionModel = RegressionModel(256)
         self.classificationModel = ClassificationModel(256, num_classes=num_classes)
-
         self.anchors = Anchors()
 
         self.regressBoxes = BBoxTransform()
@@ -236,6 +277,7 @@ class ResNet(nn.Module):
             img_batch = inputs
 
         x = self.conv1(img_batch)
+        print(x.shape)
         x = self.bn1(x)
         x = self.relu(x)
         x = self.maxpool(x)
@@ -244,6 +286,8 @@ class ResNet(nn.Module):
         x2 = self.layer2(x1)
         x3 = self.layer3(x2)
         x4 = self.layer4(x3)
+
+        print(x4.shape)
 
         features = self.fpn([x2, x3, x4])
 
@@ -271,7 +315,7 @@ class ResNet(nn.Module):
             transformed_anchors = transformed_anchors[:, scores_over_thresh, :]
             scores = scores[:, scores_over_thresh, :]
 
-            anchors_nms_idx = nms(transformed_anchors[0,:,:], scores[0,:,0], 0.5)
+            anchors_nms_idx = nms(transformed_anchors[0, :, :], scores[0, :, 0], 0.5)
 
             nms_scores, nms_class = classification[0, anchors_nms_idx, :].max(dim=1)
 

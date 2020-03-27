@@ -58,7 +58,7 @@ class CocoDataset(Dataset):
             self.labels[value] = key
 
     def __len__(self):
-        return len(self.image_ids)
+        return 10
 
     def __getitem__(self, idx):
 
